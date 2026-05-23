@@ -5,10 +5,12 @@ import {
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import client from '../../api/client';
+import { useTheme } from '../../context/ThemeContext';
 
 const CATEGORIES = ['Alimentación', 'Transporte', 'Salud', 'Entretenimiento', 'Otros'];
 
 export default function BudgetsScreen() {
+  const { theme } = useTheme();
   const [budgets, setBudgets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [modalVisible, setModalVisible] = useState(false);
@@ -37,11 +39,8 @@ export default function BudgetsScreen() {
     if (!limit || isNaN(limit) || Number(limit) <= 0)
       return Alert.alert('Error', 'Ingresa un límite válido');
     try {
-      if (editTarget) {
-        await client.put(`/budgets/${editTarget.id}`, { limit: Number(limit) });
-      } else {
-        await client.post('/budgets', { category, limit: Number(limit) });
-      }
+      if (editTarget) await client.put(`/budgets/${editTarget.id}`, { limit: Number(limit) });
+      else await client.post('/budgets', { category, limit: Number(limit) });
       setModalVisible(false);
       fetchBudgets();
     } catch (err) {
@@ -65,21 +64,23 @@ export default function BudgetsScreen() {
     return '#4CAF50';
   };
 
+  const s = styles(theme);
+
   const renderBudget = ({ item }) => (
-    <View style={styles.card}>
-      <View style={styles.cardHeader}>
-        <Text style={styles.categoryText}>{item.category}</Text>
+    <View style={s.card}>
+      <View style={s.cardHeader}>
+        <Text style={s.categoryText}>{item.category}</Text>
         <View style={{ flexDirection: 'row', gap: 10 }}>
           <TouchableOpacity onPress={() => openModal(item)}>
-            <Text style={styles.edit}>Editar</Text>
+            <Text style={s.edit}>Editar</Text>
           </TouchableOpacity>
           <TouchableOpacity onPress={() => handleDelete(item.id)}>
-            <Text style={styles.delete}>Eliminar</Text>
+            <Text style={s.delete}>Eliminar</Text>
           </TouchableOpacity>
         </View>
       </View>
 
-      <Text style={styles.amounts}>
+      <Text style={s.amounts}>
         ${item.spent?.toFixed(2)} / ${item.limit?.toFixed(2)}
         {'  '}
         <Text style={{ color: getBarColor(item.alert), fontWeight: 'bold' }}>
@@ -88,9 +89,8 @@ export default function BudgetsScreen() {
         </Text>
       </Text>
 
-      {/* Barra de progreso */}
-      <View style={styles.barBg}>
-        <View style={[styles.barFill, {
+      <View style={s.barBg}>
+        <View style={[s.barFill, {
           width: `${Math.min(item.percentage, 100)}%`,
           backgroundColor: getBarColor(item.alert)
         }]} />
@@ -99,57 +99,58 @@ export default function BudgetsScreen() {
   );
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Presupuestos</Text>
-        <TouchableOpacity style={styles.addBtn} onPress={() => openModal()}>
-          <Text style={styles.addBtnText}>+ Nuevo</Text>
+    <View style={s.container}>
+      <View style={s.header}>
+        <Text style={s.title}>Presupuestos</Text>
+        <TouchableOpacity style={s.addBtn} onPress={() => openModal()}>
+          <Text style={s.addBtnText}>+ Nuevo</Text>
         </TouchableOpacity>
       </View>
 
       {loading
-        ? <ActivityIndicator size="large" style={{ marginTop: 40 }} />
+        ? <ActivityIndicator size="large" style={{ marginTop: 40 }} color="#2196F3" />
         : <FlatList
             data={budgets}
             keyExtractor={b => b.id}
             renderItem={renderBudget}
-            ListEmptyComponent={<Text style={styles.empty}>No hay presupuestos definidos</Text>}
+            ListEmptyComponent={<Text style={s.empty}>No hay presupuestos definidos</Text>}
           />
       }
 
-      <Modal visible={modalVisible} transparent animationType="slide">
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>{editTarget ? 'Editar límite' : 'Nuevo presupuesto'}</Text>
+      <Modal visible={modalVisible} transparent animationType="slide" onRequestClose={() => setModalVisible(false)}>
+        <View style={s.modalOverlay}>
+          <View style={s.modalContent}>
+            <Text style={s.modalTitle}>{editTarget ? 'Editar límite' : 'Nuevo presupuesto'}</Text>
 
             {!editTarget && (
               <>
-                <Text style={styles.label}>Categoría</Text>
-                <View style={styles.selectorRow}>
+                <Text style={s.label}>Categoría</Text>
+                <View style={s.selectorRow}>
                   {CATEGORIES.map(c => (
-                    <TouchableOpacity key={c} style={[styles.chip, category === c && styles.chipActive]} onPress={() => setCategory(c)}>
-                      <Text style={[styles.chipText, category === c && styles.chipTextActive]}>{c}</Text>
+                    <TouchableOpacity key={c} style={[s.chip, category === c && s.chipActive]} onPress={() => setCategory(c)}>
+                      <Text style={[s.chipText, category === c && s.chipTextActive]}>{c}</Text>
                     </TouchableOpacity>
                   ))}
                 </View>
               </>
             )}
 
-            <Text style={styles.label}>Límite mensual ($)</Text>
+            <Text style={s.label}>Límite mensual ($)</Text>
             <TextInput
-              style={styles.input}
+              style={s.input}
               keyboardType="numeric"
               placeholder="0.00"
+              placeholderTextColor={theme.muted}
               value={limit}
               onChangeText={setLimit}
             />
 
             <View style={{ flexDirection: 'row', gap: 10, marginTop: 14 }}>
-              <TouchableOpacity style={[styles.btn, { backgroundColor: '#aaa', flex: 1 }]} onPress={() => setModalVisible(false)}>
-                <Text style={styles.btnText}>Cancelar</Text>
+              <TouchableOpacity style={[s.btn, { backgroundColor: theme.muted, flex: 1 }]} onPress={() => setModalVisible(false)}>
+                <Text style={s.btnText}>Cancelar</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={[styles.btn, { flex: 1 }]} onPress={handleSave}>
-                <Text style={styles.btnText}>Guardar</Text>
+              <TouchableOpacity style={[s.btn, { flex: 1 }]} onPress={handleSave}>
+                <Text style={s.btnText}>Guardar</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -159,31 +160,31 @@ export default function BudgetsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f5f5f5' },
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 16, backgroundColor: '#fff', elevation: 2 },
-  title: { fontSize: 20, fontWeight: 'bold' },
-  addBtn: { backgroundColor: '#2196F3', borderRadius: 8, paddingHorizontal: 14, paddingVertical: 8 },
-  addBtnText: { color: '#fff', fontWeight: 'bold' },
-  card: { backgroundColor: '#fff', margin: 8, marginHorizontal: 12, borderRadius: 10, padding: 16, elevation: 1 },
-  cardHeader: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 },
-  categoryText: { fontSize: 16, fontWeight: 'bold' },
-  amounts: { fontSize: 13, color: '#555', marginBottom: 8 },
-  barBg: { height: 10, backgroundColor: '#e0e0e0', borderRadius: 5, overflow: 'hidden' },
-  barFill: { height: '100%', borderRadius: 5 },
-  edit: { color: '#2196F3', fontSize: 13 },
-  delete: { color: '#F44336', fontSize: 13 },
-  empty: { textAlign: 'center', marginTop: 40, color: '#aaa' },
-  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'center', padding: 24 },
-  modalContent: { backgroundColor: '#fff', borderRadius: 12, padding: 20 },
-  modalTitle: { fontSize: 18, fontWeight: 'bold', marginBottom: 16 },
-  label: { fontSize: 13, fontWeight: '600', marginBottom: 6, marginTop: 10, color: '#444' },
-  input: { backgroundColor: '#f5f5f5', borderRadius: 8, padding: 12, borderWidth: 1, borderColor: '#ddd', fontSize: 16 },
-  selectorRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  chip: { borderRadius: 20, paddingHorizontal: 12, paddingVertical: 6, backgroundColor: '#e0e0e0' },
-  chipActive: { backgroundColor: '#2196F3' },
-  chipText: { color: '#555', fontSize: 13 },
+const styles = (theme) => ({
+  container:      { flex: 1, backgroundColor: theme.bg },
+  header:         { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 16, backgroundColor: theme.card, elevation: 2 },
+  title:          { fontSize: 20, fontWeight: 'bold', color: theme.text },
+  addBtn:         { backgroundColor: '#2196F3', borderRadius: 8, paddingHorizontal: 14, paddingVertical: 8 },
+  addBtnText:     { color: '#fff', fontWeight: 'bold' },
+  card:           { backgroundColor: theme.card, margin: 8, marginHorizontal: 12, borderRadius: 10, padding: 16, elevation: 1 },
+  cardHeader:     { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 },
+  categoryText:   { fontSize: 16, fontWeight: 'bold', color: theme.text },
+  amounts:        { fontSize: 13, color: theme.subtext, marginBottom: 8 },
+  barBg:          { height: 10, backgroundColor: theme.border, borderRadius: 5, overflow: 'hidden' },
+  barFill:        { height: '100%', borderRadius: 5 },
+  edit:           { color: '#2196F3', fontSize: 13 },
+  delete:         { color: '#F44336', fontSize: 13 },
+  empty:          { textAlign: 'center', marginTop: 40, color: theme.muted },
+  modalOverlay:   { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', padding: 24 },
+  modalContent:   { backgroundColor: theme.card, borderRadius: 12, padding: 20 },
+  modalTitle:     { fontSize: 18, fontWeight: 'bold', marginBottom: 16, color: theme.text },
+  label:          { fontSize: 13, fontWeight: '600', marginBottom: 6, marginTop: 10, color: theme.subtext },
+  input:          { backgroundColor: theme.inputBg, borderRadius: 8, padding: 12, borderWidth: 1, borderColor: theme.border, fontSize: 16, color: theme.text },
+  selectorRow:    { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  chip:           { borderRadius: 20, paddingHorizontal: 12, paddingVertical: 6, backgroundColor: theme.chip },
+  chipActive:     { backgroundColor: '#2196F3' },
+  chipText:       { color: theme.chipText, fontSize: 13 },
   chipTextActive: { color: '#fff', fontWeight: 'bold' },
-  btn: { backgroundColor: '#2196F3', borderRadius: 8, padding: 12, alignItems: 'center' },
-  btnText: { color: '#fff', fontWeight: 'bold' },
+  btn:            { backgroundColor: '#2196F3', borderRadius: 8, padding: 12, alignItems: 'center' },
+  btnText:        { color: '#fff', fontWeight: 'bold' },
 });
