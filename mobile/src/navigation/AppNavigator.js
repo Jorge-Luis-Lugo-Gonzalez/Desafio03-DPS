@@ -57,9 +57,9 @@ const MainTabs = () => {
 
 export default function AppNavigator() {
   const { user, loading } = useAuth();  
-  const { theme, isDark } = useTheme(); 
+  const { theme, isDark, themeLoaded } = useTheme(); 
 
-  if (loading) return (
+  if (loading || !themeLoaded) return (
     <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: theme.bg }}>
       <ActivityIndicator size="large" color="#2196F3" />
     </View>
