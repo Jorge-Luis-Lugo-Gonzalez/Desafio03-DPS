@@ -39,11 +39,9 @@ Finanzas Personales es una aplicación móvil multiplataforma que permite a los 
 |---|---|
 | React Native + Expo | Framework principal |
 | React Navigation | Navegación Stack y Tab |
-| Axios | Llamadas HTTP al backend |
 | AsyncStorage | Persistencia de sesión |
 | react-native-chart-kit | Gráfica de torta en el dashboard |
-| expo-image-picker | Foto de recibo desde cámara/galería |
-| expo-file-system + expo-sharing | Exportación de reporte CSV |
+
 
 ### Backend
 | Tecnología | Uso |
