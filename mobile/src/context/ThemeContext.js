@@ -1,4 +1,7 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+const THEME_KEY = '@theme_preference';
 
 export const lightTheme = {
   dark: false,
@@ -34,13 +37,32 @@ const ThemeContext = createContext(null);
 
 export function ThemeProvider({ children }) {
   const [isDark, setIsDark] = useState(false);
+  const [themeLoaded, setThemeLoaded] = useState(false);
 
-  function toggleTheme() {
-    setIsDark(prev => !prev);
+  // Cargar preferencia guardada al iniciar
+  useEffect(() => {
+    AsyncStorage.getItem(THEME_KEY)
+      .then(saved => {
+        if (saved !== null) {
+          setIsDark(saved === 'dark');
+        }
+      })
+      .catch(() => {})
+      .finally(() => setThemeLoaded(true));
+  }, []);
+
+  // Guardar preferencia cada vez que cambia
+  async function toggleTheme() {
+    const next = !isDark;
+    setIsDark(next);
+    try {
+      await AsyncStorage.setItem(THEME_KEY, next ? 'dark' : 'light');
+    } catch {}
   }
 
   const value = {
     isDark,
+    themeLoaded,
     toggleTheme,
     theme: isDark ? darkTheme : lightTheme,
   };
